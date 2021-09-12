@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="BouncyCastle.NetCore" Version="1.8.8" />
+      <PackageReference Include="Nethereum.Util" Version="4.0.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\common\Consensys.BlockchainBootcamp2021.Exercises.Common\Consensys.BlockchainBootcamp2021.Exercises.Common.csproj" />
+    </ItemGroup>
+
+</Project>
