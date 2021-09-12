@@ -1,34 +1,43 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Consensys.BlockchainBootcamp2021.Exercises.Chapter1.Transactions
 {
     public class Blockchain : IEnumerable<Block>
     {
+        private readonly Context _context;
         private readonly List<Block> _blocks;
-        
-        public Blockchain()
+
+        public Blockchain(Context context)
         {
+            _context = context;
             _blocks = new List<Block>();
             CreateGenesisBlock();
         }
 
         public IReadOnlyList<Block> Blocks => _blocks;
 
-        public void AddBlock(string data)
+        public IPendingBlock NewBlock()
+        {
+            return new PendingBlock(this);
+        }
+        
+        public void AddBlock(IReadOnlyList<Transaction> transactions)
         {
             var latestBlock = _blocks[^1];
             var index = latestBlock.Index + 1;
             var timestamp = DateTimeOffset.UtcNow;
-            var hash = BlockchainExtensions.CalculateHash(latestBlock.Index + 1, timestamp, latestBlock.Hash, data);
+            
+            var blockHash = Extensions.CalculateHash(latestBlock.Index + 1, timestamp, latestBlock.Hash, transactions);
             
             var block = new Block(
-                index, 
-                data, 
-                hash, 
+                index,
+                blockHash, 
                 latestBlock.Hash, 
-                timestamp);
+                timestamp, 
+                transactions);
             
             _blocks.Add(block);
         }
@@ -41,10 +50,10 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Chapter1.Transactions
         {
             _blocks.Add(new Block(
                 0,
-                string.Empty, 
                 new string('0', 64), 
                 new string('0', 64), 
-                DateTimeOffset.UtcNow));
+                DateTimeOffset.UtcNow, 
+                new List<Transaction>()));
         }
     }
 }
