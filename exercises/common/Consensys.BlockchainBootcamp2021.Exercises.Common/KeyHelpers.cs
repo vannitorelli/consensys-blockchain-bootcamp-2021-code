@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -164,7 +166,7 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 		    string passPhrase,
 		    byte[] data)
 	    {
-		    var privateKey = GetPrivateKeys(privateKeyFilePath, passPhrase).FirstOrDefault();
+		    var privateKey = GetPrivateKeysFromFile(privateKeyFilePath, passPhrase).FirstOrDefault();
 		    if (privateKey == null)
 		    {
 			    throw new ApplicationException("Could not find a suitable private key in the key ring.");
@@ -193,7 +195,7 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 		    byte[] data, 
 		    byte[] signature)
 	    {
-		    var publicKey = GetPublicKeys(publicKeyFilePath).FirstOrDefault(p => p.IsMasterKey);
+		    var publicKey = GetPublicKeysFromFile(publicKeyFilePath).FirstOrDefault(p => p.IsMasterKey);
 		    if (publicKey == null)
 		    {
 			    throw new ApplicationException("Could not find a suitable public key in the key ring.");
@@ -205,8 +207,8 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 		    
 		    return signer.VerifySignature(signature);
 	    }
-	    
-	    public static IReadOnlyList<PgpPublicKey> GetPublicKeys(string publicKeyFilePath)
+
+	    public static IReadOnlyList<PgpPublicKey> GetPublicKeysFromFile(string publicKeyFilePath)
 	    {
 		    if (!File.Exists(publicKeyFilePath))
 		    {
@@ -214,19 +216,21 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 		    }
 
 		    var stream = File.OpenRead(publicKeyFilePath);
-		    var publicKeyRingBundle = new PgpPublicKeyRingBundle(PgpUtilities.GetDecoderStream(stream));
-		    var publicKeys = publicKeyRingBundle
-			    .GetKeyRings()
-			    .Cast<PgpPublicKeyRing>()
-			    .SelectMany(p => p.GetPublicKeys().Cast<PgpPublicKey>())
-			    .ToList();
-
+		    var publicKeys = DoGetPublicKeys(stream);
 		    stream.Close();
 		    return publicKeys;
 	    }
 	    
-	    public static IReadOnlyList<PgpPrivateKey> GetPrivateKeys(
-		    string privateKeyFilePath, 
+	    public static IReadOnlyList<PgpPublicKey> GetPublicKeysFromKeyText(string publicKeyText)
+	    {
+		    var stream = new MemoryStream(Encoding.Default.GetBytes(publicKeyText));
+		    var publicKeys = DoGetPublicKeys(stream);
+		    stream.Close();
+		    return publicKeys;
+	    }
+	    
+	    public static IReadOnlyList<PgpPrivateKey> GetPrivateKeysFromFile(
+		    string privateKeyFilePath,
 		    string passPhrase)
 	    {
 		    if (!File.Exists(privateKeyFilePath))
@@ -235,6 +239,37 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 		    }
 
 		    var stream = File.OpenRead(privateKeyFilePath);
+		    var privateKeys = DoGetPrivateKeys(stream, passPhrase);
+		    stream.Close();
+		    return privateKeys;
+	    }
+	    
+	    public static IReadOnlyList<PgpPrivateKey> GetPrivateKeysFromKeyText(
+		    string privateKeyText,
+		    string passPhrase)
+	    {
+		    var stream = new MemoryStream(Encoding.Default.GetBytes(privateKeyText));
+		    var privateKeys = DoGetPrivateKeys(stream, passPhrase);
+		    stream.Close();
+		    return privateKeys;
+	    }
+	    
+	    private static IReadOnlyList<PgpPublicKey> DoGetPublicKeys(Stream stream)
+	    {
+		    var publicKeyRingBundle = new PgpPublicKeyRingBundle(PgpUtilities.GetDecoderStream(stream));
+		    var publicKeys = publicKeyRingBundle
+			    .GetKeyRings()
+			    .Cast<PgpPublicKeyRing>()
+			    .SelectMany(p => p.GetPublicKeys().Cast<PgpPublicKey>())
+			    .ToList();
+		    
+		    return publicKeys;
+	    }
+	    
+	    private static IReadOnlyList<PgpPrivateKey> DoGetPrivateKeys(
+		    Stream stream, 
+		    string passPhrase)
+	    {
 		    var secretKeyRingBundle = new PgpSecretKeyRingBundle(PgpUtilities.GetDecoderStream(stream));
 		    var privateKeys = secretKeyRingBundle
 			    .GetKeyRings()
@@ -258,8 +293,7 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 		    {
 			    throw new ApplicationException("Passphrase wrong for this keyring");
 		    }
-
-		    stream.Close();
+		    
 		    return privateKeys;
 	    }
 	    
