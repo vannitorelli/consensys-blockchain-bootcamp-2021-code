@@ -164,29 +164,16 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 		    string passPhrase,
 		    byte[] data)
 	    {
-		    if (!File.Exists(privateKeyFilePath))
+		    var privateKey = GetPrivateKeys(privateKeyFilePath, passPhrase).FirstOrDefault();
+		    if (privateKey == null)
 		    {
-			    throw new ApplicationException($"File {privateKeyFilePath} does not exist.");
+			    throw new ApplicationException("Could not find a suitable private key in the key ring.");
 		    }
 		    
-		    var privateKeyFile = File.OpenRead(privateKeyFilePath);
-		    var secretKey = ReadSecretKey(privateKeyFile, p => p.IsSigningKey);
-
-		    PgpPrivateKey privateKey;
-		    try
-		    {
-			    privateKey = secretKey.ExtractPrivateKey(passPhrase.ToCharArray());
-		    }
-		    catch (Exception)
-		    {
-			    throw new ApplicationException("Passphrase is wrong for this keyring.");
-		    }
-
 		    var signer = SignerUtilities.GetSigner("SHA1withRSA");
 		    signer.Init(true, privateKey.Key);
 		    signer.BlockUpdate(data, 0, data.Length);
 		    
-		    privateKeyFile.Close();
 		    return signer.GenerateSignature();
 	    }
 
@@ -206,55 +193,76 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 		    byte[] data, 
 		    byte[] signature)
 	    {
-		    if (!File.Exists(publicKeyFilePath))
+		    var publicKey = GetPublicKeys(publicKeyFilePath).FirstOrDefault(p => p.IsMasterKey);
+		    if (publicKey == null)
 		    {
-			    throw new ApplicationException($"File {publicKeyFilePath} does not exist.");
+			    throw new ApplicationException("Could not find a suitable public key in the key ring.");
 		    }
-		    
-		    var publicKeyFile = File.OpenRead(publicKeyFilePath);
-		    var publicKey = ReadPublicKey(publicKeyFile, p => p.IsMasterKey);
 		    
 		    var signer = SignerUtilities.GetSigner("SHA1withRSA");
 		    signer.Init(false, publicKey.GetKey());
 		    signer.BlockUpdate(data, 0, data.Length);
 		    
-		    publicKeyFile.Close();
-
 		    return signer.VerifySignature(signature);
 	    }
 	    
-		private static PgpPublicKey ReadPublicKey(Stream stream, Func<PgpPublicKey, bool> filter)
-		{
-			var publicKeyRingBundle = new PgpPublicKeyRingBundle(PgpUtilities.GetDecoderStream(stream));
-			var key = publicKeyRingBundle
-				.GetKeyRings()
-				.Cast<PgpPublicKeyRing>()
-				.SelectMany(p => p.GetPublicKeys().Cast<PgpPublicKey>())
-				.FirstOrDefault(filter);
-			
-			if (key == null)
-			{
-				throw new ArgumentException("No public key suitable for encryption could be found in the key ring.");
-			}
-			return key;
-		}
+	    public static IReadOnlyList<PgpPublicKey> GetPublicKeys(string publicKeyFilePath)
+	    {
+		    if (!File.Exists(publicKeyFilePath))
+		    {
+			    throw new ApplicationException($"File {publicKeyFilePath} does not exist.");
+		    }
 
-		private static PgpSecretKey ReadSecretKey(Stream stream, Func<PgpSecretKey, bool> filter)
-		{
-			var secretKeyRingBundle = new PgpSecretKeyRingBundle(PgpUtilities.GetDecoderStream(stream));
-			var key = secretKeyRingBundle
-				.GetKeyRings()
-				.Cast<PgpSecretKeyRing>()
-				.SelectMany(p => p.GetSecretKeys().Cast<PgpSecretKey>())
-				.FirstOrDefault(filter);
+		    var stream = File.OpenRead(publicKeyFilePath);
+		    var publicKeyRingBundle = new PgpPublicKeyRingBundle(PgpUtilities.GetDecoderStream(stream));
+		    var publicKeys = publicKeyRingBundle
+			    .GetKeyRings()
+			    .Cast<PgpPublicKeyRing>()
+			    .SelectMany(p => p.GetPublicKeys().Cast<PgpPublicKey>())
+			    .ToList();
 
-			if (key == null)
-			{
-				throw new ArgumentException("No private key suitable for signing could be found in the key ring.");
-			}
-			return key;
-		}
-	
+		    stream.Close();
+		    return publicKeys;
+	    }
+	    
+	    public static IReadOnlyList<PgpPrivateKey> GetPrivateKeys(
+		    string privateKeyFilePath, 
+		    string passPhrase)
+	    {
+		    if (!File.Exists(privateKeyFilePath))
+		    {
+			    throw new ApplicationException($"File {privateKeyFilePath} does not exist.");
+		    }
+
+		    var stream = File.OpenRead(privateKeyFilePath);
+		    var secretKeyRingBundle = new PgpSecretKeyRingBundle(PgpUtilities.GetDecoderStream(stream));
+		    var privateKeys = secretKeyRingBundle
+			    .GetKeyRings()
+			    .Cast<PgpSecretKeyRing>()
+			    .SelectMany(p => p.GetSecretKeys().Cast<PgpSecretKey>())
+			    .Where(p => p.IsSigningKey)
+			    .Select(p =>
+				    {
+					    try
+					    {
+						    return p.ExtractPrivateKey(passPhrase.ToCharArray());
+					    }
+					    catch (Exception)
+					    {
+						    return null;
+					    }
+				    })
+			    .ToList();
+
+		    if (privateKeys.Any(p => p == null))
+		    {
+			    throw new ApplicationException("Passphrase wrong for this keyring");
+		    }
+
+		    stream.Close();
+		    return privateKeys;
+	    }
+	    
 		private static KeyPair CreateKeyPair(
 		    KeyType type,
 		    int keySize, 
