@@ -94,37 +94,35 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common.Tests
             File.Delete(Path.Combine(Environment.CurrentDirectory, $"key-{keyName}"));
             File.Delete(Path.Combine(Environment.CurrentDirectory, $"key-{keyName}.pub"));
         }
-        
+
         [Test]
         public async Task ShouldSignAndVerify()
         {
             var data = string.Concat(Enumerable.Range(1, 50).Select(p => Guid.NewGuid().ToString().Replace("-", "")));
             var keyName = Guid.NewGuid().ToString();
-            
+
             var keyPair = KeyHelpers.GenerateRsaKeyRingPair(
                 RsaKeySize.Size2048,
                 $"key-{keyName}",
-                "john.doe@acme.com", 
+                "john.doe@acme.com",
                 "pass");
 
-            await keyPair.ToFile(Environment.CurrentDirectory); 
-            
+            await keyPair.ToFile(Environment.CurrentDirectory);
+
             var signature = KeyHelpers.SignData(
-                Path.Combine(Environment.CurrentDirectory, $"key-{keyName}.skr"), 
-                "pass", 
+                Path.Combine(Environment.CurrentDirectory, $"key-{keyName}.skr"),
+                "pass",
                 data);
 
             var isValid = KeyHelpers.VerifyData(
-                Path.Combine(Environment.CurrentDirectory, $"key-{keyName}.pkr"), 
+                Path.Combine(Environment.CurrentDirectory, $"key-{keyName}.pkr"),
                 data,
                 signature);
-            
+
             Assert.IsTrue(isValid);
-            
+
             File.Delete(Path.Combine(Environment.CurrentDirectory, $"key-{keyName}.skr"));
             File.Delete(Path.Combine(Environment.CurrentDirectory, $"key-{keyName}.pkr"));
         }
-        
-       
     }
 }
