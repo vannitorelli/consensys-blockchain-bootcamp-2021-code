@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Consensys.BlockchainBootcamp2021.Exercises.Chapter1.Hashing;
+using Consensys.BlockchainBootcamp2021.Exercises.Common;
 using NUnit.Framework;
 
 namespace Consensys.BlockchainBootcamp2021.Exercises.Chapter1.Tests
@@ -29,32 +30,17 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Chapter1.Tests
         }
 
         [Test]
-        public void ShouldCreteBlockchainFromStrings()
+        public void ShouldGenerateAddressKeys()
         {
-            foreach (var line in _poem)
-            {
-               _blockchain.AddBlock(line);
-            }
-            
-            Assert.AreEqual(_blockchain.Blocks.Count, _poem.Length + 1);
-            CollectionAssert.AreEqual(_blockchain.Blocks.Skip(1).Select(p => p.Data), _poem);
+            var addressMap = Enumerable
+                .Range(0, 4)
+                .Select(_ => Guid.NewGuid().ToString())
+                .ToDictionary(k => k, v => KeyHelpers.GenerateRsaKeyRingPair(RsaKeySize.Size2048, v, v, "pass"));
 
-            for (var i = 0; i < _poem.Length; i++)
-            {
-                Assert.AreEqual(_blockchain.Blocks[i].Hash, _blockchain.Blocks[i+1].PreviousHash);
-            }
+           
+
         }
         
-        [Test]
-        public void ShouldVerifyBlockchain()
-        {
-            foreach (var line in _poem)
-            {
-                _blockchain.AddBlock(line);
-            }
-            
-            Assert.IsTrue( _blockchain.Verify());
-            Console.WriteLine("This blockchain is valid.");
-        }
+       
     }
 }
