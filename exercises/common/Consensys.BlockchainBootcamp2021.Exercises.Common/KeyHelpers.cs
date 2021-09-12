@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,7 +15,8 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 {
 	public static class KeyHelpers
 	{
-		private const int BufferSize = 8 * 1024;
+		private const int BufferSize = 16 * 1024;
+		private static readonly SecureRandom SecureRandom = SecureRandom.GetInstance("SHA1PRNG", false);
 		
 		private static readonly ThreadLocal<List<byte[]>> Buffers = new(() => new List<byte[]>
 			{
@@ -43,14 +42,14 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 			int keySize = RsaKeySize.Size2048,
 			string name = "id_rsa", 
 		    string identity = null, 
-		    string passPhrase = null) {
-
-	        var rsaKeyGenerationParameters = new RsaKeyGenerationParameters(
+		    string passPhrase = null)
+	    {
+		   var rsaKeyGenerationParameters = new RsaKeyGenerationParameters(
 		        BigInteger.ValueOf(0x10001), 
-		        new SecureRandom(), 
+		        SecureRandom,
 		        keySize, 
 		        25);
-	        
+			
 	        var keyPairGenerator = GeneratorUtilities.GetKeyPairGenerator("RSA");
 	        keyPairGenerator.Init(rsaKeyGenerationParameters);
 
@@ -88,7 +87,7 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 	            true,
 	            masterSubpacketGenerator.Generate(),
 	            null,
-	            new SecureRandom());
+	            SecureRandom);
 
 			// Add encryption subkey
 	        keyRingGenerator.AddSubKey(
@@ -119,7 +118,7 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
    
 		    keyPairGenerator.Init(new RsaKeyGenerationParameters(
 			    BigInteger.ValueOf(0x10001),
-			    new SecureRandom(),
+			    SecureRandom,
 			    keySize,
 			    25));
    
@@ -136,7 +135,7 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 			    (passPhrase ?? string.Empty).ToCharArray(),
 			    null,
 			    null,
-			    new SecureRandom());
+			    SecureRandom);
 		    
 		    return CreateKeyPair(
 			    KeyType.Standalone,
@@ -148,67 +147,83 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 			    p => secretKey.PublicKey.Encode(p));
 	    }
 	    
-	    public static string SignData(
+	    public static string SignDataFromKeyFile(
 		    string privateKeyFilePath,
 		    string passPhrase,
 		    string data)
 	    {
-		    var binarySignature = SignData(
-			    privateKeyFilePath, 
+		    if (!File.Exists(privateKeyFilePath))
+		    {
+			    throw new ApplicationException($"File {privateKeyFilePath} does not exist.");
+		    }
+		    
+		    var stream = File.OpenRead(privateKeyFilePath);
+		    
+		    var binarySignature = DoSignData(
+			    stream, 
 			    passPhrase, 
 			    Encoding.UTF8.GetBytes(data));
+		    
+		    stream.Close();
 		    
 		    return Convert.ToBase64String(binarySignature);
 	    }
 
-	    public static byte[] SignData(
-		    string privateKeyFilePath,
+	    public static string SignDataFromKeyText(
+		    string privateKeyText,
 		    string passPhrase,
-		    byte[] data)
+		    string data)
 	    {
-		    var privateKey = GetPrivateKeysFromFile(privateKeyFilePath, passPhrase).FirstOrDefault();
-		    if (privateKey == null)
-		    {
-			    throw new ApplicationException("Could not find a suitable private key in the key ring.");
-		    }
+		    var stream = new MemoryStream(Encoding.Default.GetBytes(privateKeyText));
 		    
-		    var signer = SignerUtilities.GetSigner("SHA1withRSA");
-		    signer.Init(true, privateKey.Key);
-		    signer.BlockUpdate(data, 0, data.Length);
+		    var binarySignature = DoSignData(
+			    stream, 
+			    passPhrase, 
+			    Encoding.UTF8.GetBytes(data));
 		    
-		    return signer.GenerateSignature();
+		    stream.Close();
+
+		    return Convert.ToBase64String(binarySignature);;
 	    }
 
-	    public static bool VerifyData(
+	    public static bool VerifyDataFromKeyFile(
 		    string publicKeyFilePath,
 		    string data,
 		    string signature)
 	    {
-		    return VerifyData(
-			    publicKeyFilePath, 
-			    Encoding.UTF8.GetBytes(data),
-			    Convert.FromBase64String(signature));
-	    }
-
-	    public static bool VerifyData(
-		    string publicKeyFilePath,
-		    byte[] data, 
-		    byte[] signature)
-	    {
-		    var publicKey = GetPublicKeysFromFile(publicKeyFilePath).FirstOrDefault(p => p.IsMasterKey);
-		    if (publicKey == null)
+		    if (!File.Exists(publicKeyFilePath))
 		    {
-			    throw new ApplicationException("Could not find a suitable public key in the key ring.");
+			    throw new ApplicationException($"File {publicKeyFilePath} does not exist.");
 		    }
 		    
-		    var signer = SignerUtilities.GetSigner("SHA1withRSA");
-		    signer.Init(false, publicKey.GetKey());
-		    signer.BlockUpdate(data, 0, data.Length);
+		    var stream = File.OpenRead(publicKeyFilePath);
+		    var outcome = DoVerifyData(
+			    stream, 
+			    Encoding.UTF8.GetBytes(data),
+			    Convert.FromBase64String(signature));
 		    
-		    return signer.VerifySignature(signature);
+		    stream.Close();
+		    return outcome;
+	    }
+	    
+	    public static bool VerifyDataFromKeyText(
+		    string publicKeyText,
+		    string data,
+		    string signature)
+	    {
+		    var stream = new MemoryStream(Encoding.Default.GetBytes(publicKeyText));
+		    var outcome = DoVerifyData(
+			    stream, 
+			    Encoding.UTF8.GetBytes(data),
+			    Convert.FromBase64String(signature));
+		    
+		    stream.Close();
+		    return outcome;
 	    }
 
-	    public static IReadOnlyList<PgpPublicKey> GetPublicKeysFromFile(string publicKeyFilePath)
+	   
+
+	    public static IReadOnlyList<PgpPublicKey> GetPublicKeysFromKeyFile(string publicKeyFilePath)
 	    {
 		    if (!File.Exists(publicKeyFilePath))
 		    {
@@ -229,7 +244,7 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 		    return publicKeys;
 	    }
 	    
-	    public static IReadOnlyList<PgpPrivateKey> GetPrivateKeysFromFile(
+	    public static IReadOnlyList<PgpPrivateKey> GetPrivateKeysFromKeyFile(
 		    string privateKeyFilePath,
 		    string passPhrase)
 	    {
@@ -252,6 +267,42 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common
 		    var privateKeys = DoGetPrivateKeys(stream, passPhrase);
 		    stream.Close();
 		    return privateKeys;
+	    }
+	    
+	    private static byte[] DoSignData(
+		    Stream stream,
+		    string passPhrase,
+		    byte[] data)
+	    {
+		    var privateKey = DoGetPrivateKeys(stream, passPhrase).FirstOrDefault();
+		    if (privateKey == null)
+		    {
+			    throw new ApplicationException("Could not find a suitable private key in the key ring.");
+		    }
+		    
+		    var signer = SignerUtilities.GetSigner("SHA1withRSA");
+		    signer.Init(true, privateKey.Key);
+		    signer.BlockUpdate(data, 0, data.Length);
+		    
+		    return signer.GenerateSignature();
+	    }
+	    
+	    private static bool DoVerifyData(
+		    Stream stream,
+		    byte[] data, 
+		    byte[] signature)
+	    {
+		    var publicKey = DoGetPublicKeys(stream).FirstOrDefault(p => p.IsMasterKey);
+		    if (publicKey == null)
+		    {
+			    throw new ApplicationException("Could not find a suitable public key in the key ring.");
+		    }
+		    
+		    var signer = SignerUtilities.GetSigner("SHA1withRSA");
+		    signer.Init(false, publicKey.GetKey());
+		    signer.BlockUpdate(data, 0, data.Length);
+		    
+		    return signer.VerifySignature(signature);
 	    }
 	    
 	    private static IReadOnlyList<PgpPublicKey> DoGetPublicKeys(Stream stream)

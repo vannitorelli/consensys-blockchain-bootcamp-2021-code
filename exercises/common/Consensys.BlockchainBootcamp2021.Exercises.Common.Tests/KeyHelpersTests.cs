@@ -109,12 +109,12 @@ namespace Consensys.BlockchainBootcamp2021.Exercises.Common.Tests
 
             await keyPair.ToFile(Environment.CurrentDirectory);
 
-            var signature = KeyHelpers.SignData(
+            var signature = KeyHelpers.SignDataFromKeyFile(
                 Path.Combine(Environment.CurrentDirectory, $"key-{keyName}.skr"),
                 "pass",
                 data);
 
-            var isValid = KeyHelpers.VerifyData(
+            var isValid = KeyHelpers.VerifyDataFromKeyFile(
                 Path.Combine(Environment.CurrentDirectory, $"key-{keyName}.pkr"),
                 data,
                 signature);
