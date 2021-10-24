@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E17FB267-156C-46C8-A5B7-6F662BE89AAD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Consensys.BlockchainBootcamp2021.Exercises.Common", "common\Consensys.BlockchainBootcamp2021.Exercises.Common\Consensys.BlockchainBootcamp2021.Exercises.Common.csproj", "{6DFEB33C-7262-4504-A178-83DA565A9CD8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Consensys.BlockchainBootcamp2021.Exercises.Chapter1", "chapter-01\Consensys.BlockchainBootcamp2021.Exercises.Chapter1\Consensys.BlockchainBootcamp2021.Exercises.Chapter1.csproj", "{909D1836-3C33-432D-8BA1-227FF1B4BD28}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Consensys.BlockchainBootcamp2021.Exercises.Common.Tests", "common\Consensys.BlockchainBootcamp2021.Exercises.Common.Tests\Consensys.BlockchainBootcamp2021.Exercises.Common.Tests.csproj", "{55464AAD-C2BB-42ED-92E2-DE92FAB15D89}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Consensys.BlockchainBootcamp2021.Exercises.Chapter1.Tests", "chapter-01\Consensys.BlockchainBootcamp2021.Exercises.Chapter1.Tests\Consensys.BlockchainBootcamp2021.Exercises.Chapter1.Tests.csproj", "{962185B7-907D-455D-AB26-18EB4BAFF169}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6DFEB33C-7262-4504-A178-83DA565A9CD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DFEB33C-7262-4504-A178-83DA565A9CD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DFEB33C-7262-4504-A178-83DA565A9CD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DFEB33C-7262-4504-A178-83DA565A9CD8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{909D1836-3C33-432D-8BA1-227FF1B4BD28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{909D1836-3C33-432D-8BA1-227FF1B4BD28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{909D1836-3C33-432D-8BA1-227FF1B4BD28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{909D1836-3C33-432D-8BA1-227FF1B4BD28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55464AAD-C2BB-42ED-92E2-DE92FAB15D89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55464AAD-C2BB-42ED-92E2-DE92FAB15D89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55464AAD-C2BB-42ED-92E2-DE92FAB15D89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55464AAD-C2BB-42ED-92E2-DE92FAB15D89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{962185B7-907D-455D-AB26-18EB4BAFF169}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{962185B7-907D-455D-AB26-18EB4BAFF169}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{962185B7-907D-455D-AB26-18EB4BAFF169}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{962185B7-907D-455D-AB26-18EB4BAFF169}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{55464AAD-C2BB-42ED-92E2-DE92FAB15D89} = {E17FB267-156C-46C8-A5B7-6F662BE89AAD}
+		{962185B7-907D-455D-AB26-18EB4BAFF169} = {E17FB267-156C-46C8-A5B7-6F662BE89AAD}
+	EndGlobalSection
+EndGlobal
