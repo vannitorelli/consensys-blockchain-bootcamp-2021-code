@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Consensys.BlockchainBootcamp2021.Exercises.Common;
+using Consensys.BlockchainBootcamp2021.Exercises.Common.Cryptography;
 
 namespace Consensys.BlockchainBootcamp2021.Exercises.Chapter1.Transactions
 {

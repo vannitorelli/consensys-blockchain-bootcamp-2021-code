@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Consensys.BlockchainBootcamp2021.Exercises.Chapter1.Transactions;
 using Consensys.BlockchainBootcamp2021.Exercises.Common;
+using Consensys.BlockchainBootcamp2021.Exercises.Common.Cryptography;
 using NUnit.Framework;
 
 namespace Consensys.BlockchainBootcamp2021.Exercises.Chapter1.Tests

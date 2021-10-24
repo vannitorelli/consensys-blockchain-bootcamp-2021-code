@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Consensys.BlockchainBootcamp2021.Exercises.Common.Cryptography;
 using NUnit.Framework;
 
 namespace Consensys.BlockchainBootcamp2021.Exercises.Common.Tests

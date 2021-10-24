@@ -11,7 +11,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 
-namespace Consensys.BlockchainBootcamp2021.Exercises.Common
+namespace Consensys.BlockchainBootcamp2021.Exercises.Common.Cryptography
 {
 	public static class KeyHelpers
 	{
